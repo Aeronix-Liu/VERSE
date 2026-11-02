@@ -1,0 +1,131 @@
+# Phase-2 structured_imitate self-evolve GRPO (4xA800, GPU 4-7).
+# Cloned from config_full_selfevolve.yaml. The ONLY change vs the full self-evolve
+# run is the Proposer mode: PROPOSER_MODE=structured_imitate (set in the launcher),
+# where the Proposer outputs <question_params> object-label picks and the system
+# renders the final GRPO-style question text. r_Q = 0.1*fmt + 0.9*valid (DGE),
+# no curriculum reward. Base = rrs-744 (same as Phase-1d, for clean comparison).
+# See cursor_memory/2026-07-29_phase1_dge_fix_and_baseline.md.
+
+data:
+  train_files: ./dataset/full_selfevolve_train_v2.jsonl
+  val_files: ./dataset/full_selfevolve_train_v2.jsonl
+  prompt_key: problem
+  answer_key: answer
+  image_key: images
+  video_key: videos
+  image_dir: null
+  video_fps: 2.0
+  max_prompt_length: 6144
+  max_response_length: 8192
+  rollout_batch_size: 16
+  mini_rollout_batch_size: 16
+  val_batch_size: 16
+  override_chat_template: null
+  shuffle: false
+  seed: 42
+  min_pixels: 100352
+  max_pixels: 200704
+  filter_overlong_prompts: false
+algorithm:
+  adv_estimator: grpo
+  two_round_training: true
+  disable_kl: false
+  use_kl_loss: true
+  kl_penalty: low_var_kl
+  kl_coef: 0.01
+  online_filtering: false
+  filter_key: overall
+  filter_low: 0.01
+  filter_high: 0.99
+worker:
+  actor:
+    global_batch_size: 16
+    micro_batch_size_per_device_for_update: 1
+    micro_batch_size_per_device_for_experience: 1
+    max_grad_norm: 1.0
+    padding_free: true
+    dynamic_batching: true
+    ulysses_size: 1
+    use_torch_compile: false
+    model:
+      model_path: /data/pengtianshuo/self_evolve/Xinran/checkpoints/vilasr_reflective_4gpu
+      enable_gradient_checkpointing: true
+      trust_remote_code: true
+      freeze_vision_tower: true
+    optim:
+      lr: 1.0e-06
+      weight_decay: 0.01
+      strategy: adamw
+      lr_warmup_ratio: 0.0
+    fsdp:
+      enable_full_shard: true
+      enable_cpu_offload: false
+      enable_rank0_init: true
+      torch_dtype: bf16
+    offload:
+      offload_params: true
+      offload_optimizer: true
+  rollout:
+    n: 8
+    temperature: 1.0
+    top_p: 1.0
+    max_model_len: 32768
+    max_num_batched_tokens: 32768
+    limit_images: 32
+    gpu_memory_utilization: 0.35
+    enforce_eager: true
+    enable_chunked_prefill: true
+    tensor_parallel_size: 2
+    disable_tqdm: true
+    single_turn_response_length: 1024
+    num_llm_calls_available: 6
+    val_override_config:
+      temperature: 0.6
+      top_p: 0.95
+      n: 1
+  ref:
+    fsdp:
+      enable_full_shard: true
+      enable_cpu_offload: false
+      enable_rank0_init: true
+      torch_dtype: bf16
+    offload:
+      offload_params: true
+  reward:
+    reward_function: ./training/reward_function/unified_reward.py:compute_score
+    reward_function_kwargs:
+      agentic_solver: true
+      question_quality_kwargs:
+        model: gpt-4o-mini
+        api_key: EMPTY
+        service_url: https://api.openai.com/v1
+        timeout: 120
+      majority_correctness_kwargs:
+        model: gpt-4o-mini
+        api_key: EMPTY
+        service_url: https://api.openai.com/v1
+        timeout: 120
+    skip_special_tokens: true
+    num_cpus: 2
+trainer:
+  total_epochs: 10
+  max_steps: 100
+  project_name: ViLaSR-SelfEvolve
+  experiment_name: vilasr_self_evolve_immitate_porposer
+  logger:
+  - file
+  - wandb
+  nnodes: 1
+  n_gpus_per_node: 4
+  max_try_make_batch: 100
+  world_simulator_max_workers: 4
+  val_freq: -1
+  val_before_train: false
+  val_only: false
+  val_generations_to_log: 3
+  save_freq: 50
+  save_limit: 4
+  save_model_only: true
+  save_checkpoint_path: /data/pengtianshuo/self_evolve/Xinran/checkpoints/vilasr_self_evolve_immitate_porposer
+  load_checkpoint_path: null
+  find_last_checkpoint: true

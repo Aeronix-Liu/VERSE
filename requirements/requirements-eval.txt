@@ -1,0 +1,31 @@
+# VERSE agentic eval env (VSI-Bench / SPAR-Bench / MAZE). Pinned to the
+# versions used to produce the paper numbers. Install into its own conda env
+# (kept separate from the self-evolve env because of the vLLM version pin).
+transformers==4.51.1
+datasets==3.5.0
+scipy
+einops
+sentencepiece
+protobuf==3.19.0
+uvicorn
+fastapi
+sse-starlette
+matplotlib
+fire
+pydantic==1.10.0
+tensorboard==2.14.0
+deepspeed==0.17.1
+accelerate==1.6.0
+nltk==3.9.1
+loguru
+omegaconf==2.3.0
+tabulate
+vllm==0.7.3
+ray==2.47.1
+qwen-vl-utils
+codetiming==1.4.0
+mathruler==0.1.0
+pylatexenc==2.10
+torchdata==0.11.0
+wandb==0.19.11
+rouge_score

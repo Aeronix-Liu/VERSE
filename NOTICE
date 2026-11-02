@@ -1,0 +1,10 @@
+VERSE original additions are licensed under MIT. Bundled upstream components
+retain their original copyright notices and licenses; MIT does not replace them.
+
+The self-evolution trainer and evaluation harness derive from ViLaSR
+(https://github.com/AntResearchNLP/ViLaSR), EasyR1, and veRL.
+See docs/ATTRIBUTION.md and self_evolve/easy_r1/LICENSE.
+
+The paper PDF and third-party datasets, figures, models, and benchmark assets
+are not relicensed by the repository's software license. Refer to their original
+terms. No checkpoint weights are included in this repository.

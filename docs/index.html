@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VERSE: Verifiable Spatial Self-Evolution with Geometric Process Rewards</title>
+  <meta name="description" content="VERSE trains vision-language models to think, draw, and self-evolve in 3D scenes and mazes, using engine-verified geometric process rewards on intermediate visual tool calls.">
+  <meta name="keywords" content="VERSE, spatial reasoning, vision-language models, self-evolution, process reward, agentic visual tools, VSI-Bench, SPAR-Bench, MAZE">
+  <meta property="og:title" content="VERSE: Verifiable Spatial Self-Evolution with Geometric Process Rewards">
+  <meta property="og:description" content="Engine-verified geometric process rewards for agentic spatial self-evolution. VSI-Bench 33.68 &rarr; 40.52, MAZE 33.50 &rarr; 90.80 on Qwen2.5-VL-7B.">
+  <meta property="og:image" content="static/images/fig1_paradigms.png">
+  <link rel="canonical" href="https://aeronix-liu.github.io/VERSE/">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%235b3fa8'/><path d='M14 18l18 30 18-30' stroke='white' stroke-width='7' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans:400,500,700|Noto+Sans:400,500,700|JetBrains+Mono:400,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <link rel="stylesheet" href="static/css/index.css?v=4">
+</head>
+<body>
+
+<!-- ============================== HERO ============================== -->
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop has-text-centered">
+      <h1 class="title is-1 publication-title">
+        <span class="verse-word">VERSE</span>: Verifiable Spatial Self-Evolution<br>with Geometric Process Rewards
+      </h1>
+
+      
+      <div class="is-size-5 publication-authors">
+        <span class="author-block">Xinran Liu, Yilei Jiang, Tianshuo Peng,</span> <span class="author-block">Kaixuan Fan, Jinyuan Hu, Xiangyu Yue<sup>*</sup></span>
+      </div>
+      <div class="is-size-6 publication-venue">MMLab, The Chinese University of Hong Kong<br><small>* Corresponding author</small></div>
+
+      <div class="publication-links" id="publication-links"></div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================== 1. FIGURE 1 ============================== -->
+<section class="section pt-0 pb-4">
+  <div class="container is-max-desktop">
+    <figure class="paper-figure teaser">
+      <img src="static/images/fig1_paradigms.png" alt="Three training paradigms for spatial reasoning: static data training, GT-based self-evolution, and VERSE.">
+      <figcaption>
+        <b>Spatial reasoning training paradigms.</b> <i>Left:</i> static human-annotated trajectories.
+        <i>Middle:</i> self-evolution with verified answers but unchecked intermediate reasoning.
+        <i>Right:</i> VERSE verifies both the task outcome <em>and</em> the geometric fidelity of every visual tool action.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============================== 2. PARADIGM ============================== -->
+<section class="section pt-4" id="paradigm">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">From Checking Answers to Checking the Drawing Process</h2>
+    <div class="content has-text-justified">
+      <p>
+        Humans reason about space by sketching: we mark objects, trace routes, and check the marks against the scene.
+        VLMs can be given the same ability through agentic visual tools, namely <b>Object Mapper</b> (bounding boxes) and
+        <b>Path Tracer</b> (line segments), which let the model think, draw on the image, observe the result, and revise.
+        The open question is how to <i>train</i> such tool use. Figure 1 contrasts three paradigms.
+      </p>
+    </div>
+
+    <div class="columns paradigm-cards">
+      <div class="column">
+        <div class="paradigm-card static">
+          <h4>Static data training</h4>
+          <p class="pc-how">Imitate human-annotated reasoning trajectories on a fixed training set.</p>
+          <p class="pc-limit"><i class="fas fa-xmark"></i> Every trajectory has to be written by a human or a teacher model, so supervision is expensive and the data cannot grow with the model.</p>
+        </div>
+      </div>
+      <div class="column">
+        <div class="paradigm-card gt">
+          <h4>GT-based self-evolution</h4>
+          <p class="pc-how">The model proposes its own questions over 3D scenes, and a deterministic engine supplies verified answers. No human labels are needed.</p>
+          <p class="pc-limit"><i class="fas fa-xmark"></i> Only the <b>final answer</b> is checked. Once the model draws, a box on the wrong object or a route through a wall earns the same reward as a faithful drawing whenever the final guess happens to be right.</p>
+        </div>
+      </div>
+      <div class="column">
+        <div class="paradigm-card ours">
+          <h4>VERSE (ours)</h4>
+          <p class="pc-how">Agentic self-evolution with <b>process supervision</b>. The model proposes questions, the engine certifies them, and the model solves them by thinking, drawing, and observing.</p>
+          <p class="pc-limit good"><i class="fas fa-check"></i> An <b>Agentic Verifier</b> scores every intermediate tool call against the engine's geometry (box IoU, path overlap + endpoint). Faithful drawing is rewarded directly, and the RL stage needs no external annotations.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="content has-text-justified">
+      <p>
+        <b>The key observation</b> is that the self-evolution engine already knows the exact 2D projection of every object in a
+        ScanNet scene and the canonical route through every maze. VERSE reuses this ground truth to verify the <i>process</i>,
+        not just the outcome, with a closed-form reward that needs no learned reward model and no LLM judge.
+      </p>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-value">40.52<span class="unit">%</span></div>
+        <div class="stat-label">VSI-Bench, 7B</div>
+        <div class="stat-sub">+6.84 over Qwen2.5-VL-7B</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">90.80<span class="unit">%</span></div>
+        <div class="stat-label">MAZE, 7B</div>
+        <div class="stat-sub">up from 33.50%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">1,464</div>
+        <div class="stat-label">unlabeled RL contexts</div>
+        <div class="stat-sub">vs. 38,610 annotated QA for ViLaSR</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">r&nbsp;=&nbsp;0.583</div>
+        <div class="stat-label">path fidelity &harr; accuracy</div>
+        <div class="stat-sub">across 1,536 maze rollouts</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== 3. METHOD ============================== -->
+<section class="section section-alt" id="method">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Method</h2>
+
+    <h3 class="title is-4 subsection-title" id="pipeline">Three-stage pipeline</h3>
+    <figure class="paper-figure">
+      <img src="static/images/fig3_pipeline.png" alt="VERSE pipeline: cold-start SFT, reflective SFT, and agentic self-evolution with GRPO.">
+      <figcaption>
+        <b>VERSE pipeline.</b> Cold-start SFT learns tool syntax; reflective SFT learns to revise visual marks and yields
+        \(\pi_\text{ref}\). Self-evolution trains a proposer&ndash;solver loop with engine-verified outcome and process rewards.
+      </figcaption>
+    </figure>
+
+    <div class="columns is-multiline stage-cards">
+      <div class="column is-one-third">
+        <div class="stage-card">
+          <div class="stage-num">1</div>
+          <h4>Cold-start SFT</h4>
+          <p>34,745 teacher-generated tool-use trajectories teach the base model the Object Mapper / Path Tracer syntax and JSON schema.</p>
+        </div>
+      </div>
+      <div class="column is-one-third">
+        <div class="stage-card">
+          <div class="stage-num">2</div>
+          <h4>Reflective SFT</h4>
+          <p>7,912 filtered trajectories that are correct, well-formatted, and contain an <i>active re-drawing</i> event teach the model to observe and revise its marks. The result is \(\pi_\text{init} = \pi_\text{ref}\).</p>
+        </div>
+      </div>
+      <div class="column is-one-third">
+        <div class="stage-card accent">
+          <div class="stage-num">3</div>
+          <h4>Agentic self-evolution</h4>
+          <p>No annotated RL questions, answers, or trajectories. The model <b>proposes</b> structured questions, the engine <b>certifies</b> them and computes the answer, and the model <b>solves</b> them with tools. Both roles are updated with dual-group GRPO.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="content has-text-justified">
+      <p>
+        <b>Round 1: Proposer.</b> Given a context \(C\) (posed ScanNet frames with 3D boxes, or a procedural maze) and a task
+        type \(\tau\) pinned by a round-robin scheduler, the policy emits only <i>symbolic parameters</i> (object labels, a maze
+        goal). These are rendered into a question through a canonical template. The deterministic geometric engine checks
+        validity \(v_i\) and computes the exact answer \(A_i\). Invalid questions never reach the solver.
+      </p>
+      <p>
+        <b>Round 2: Solver.</b> For each certified question the policy rolls out \(G_A = 8\) multi-turn trajectories and is
+        rewarded by
+      </p>
+      <div class="equation-box">
+        \[ r^A_i \;=\; \underbrace{0.1\, S_\text{fmt}}_{\text{format}} \;+\; \underbrace{0.7\, S_\text{ans}(A_i, \hat A_i)}_{\text{answer}} \;+\; \underbrace{0.2\, \Phi(R_i; C, Q_i)}_{\text{process (Agentic Verifier)}} \]
+      </div>
+      <p>
+        Proposer and solver advantages are normalized <i>separately</i> (dual-group GRPO), with asymmetric clipping
+        \([\epsilon_l, \epsilon_h] = [0.2, 0.3]\), a low-variance KL to \(\pi_\text{ref}\), and environment observations
+        masked from the gradient.
+      </p>
+    </div>
+
+    <h3 class="title is-4 subsection-title" id="verifier">The Agentic Verifier</h3>
+    <div class="content has-text-justified">
+      <p>
+        The engine that certifies questions also knows the exact 2D projection of every object and the canonical maze route.
+        The Agentic Verifier turns that knowledge into a closed-form score \(\Phi \in [0, 1]\) for the intermediate drawings,
+        independent of whether the final answer is right.
+      </p>
+    </div>
+    <div class="columns formula-cols">
+      <div class="column">
+        <div class="formula-card">
+          <h4><i class="far fa-square"></i> Grounding fidelity (Object Mapper)</h4>
+          \[ \Phi_\text{Mapper} = \frac{1}{|L|} \sum_{\ell \in L} \max_{b \in \text{drawn}(\ell)} \; \max_{g \in \text{GT}(\ell)} \text{IoU}(b, g) \]
+          <p>Mean over query-relevant labels of the best drawn-box IoU. A label that is never drawn scores \(0\), so the model has to localize every referenced object at least once.</p>
+        </div>
+      </div>
+      <div class="column">
+        <div class="formula-card">
+          <h4><i class="fas fa-route"></i> Path fidelity (Path Tracer)</h4>
+          \[ \Phi_\text{Tracer} = \lambda \frac{\text{LCS}(\hat P, P^\star)}{|P^\star|} + (1 - \lambda)\, \mathbb{1}\!\left[\hat P_{-1} = P^\star_{-1}\right] \]
+          <p>The drawn route is snapped to grid cells and aligned with the engine path by longest common subsequence, plus a bonus for reaching the right cell. We use \(\lambda = 0.6\).</p>
+        </div>
+      </div>
+    </div>
+
+    <figure class="paper-figure">
+      <img src="static/images/fig2_verifier.png" alt="Agentic Verifier: grounding fidelity via box IoU and path fidelity via LCS and endpoint matching.">
+      <figcaption><b>Agentic Verifier.</b> Green marks engine ground truth; red marks tool actions.</figcaption>
+    </figure>
+
+    <div class="playground">
+      <div class="playground-head">
+        <h4 class="title is-5"><i class="fas fa-hand-pointer"></i> Try it: outcome reward vs. process reward</h4>
+        <p>
+          Drag or resize the red boxes, and click maze cells to draw a route. The verifier scores update live, next to what an
+          <b>outcome-only</b> reward would give.
+        </p>
+      </div>
+      <div class="columns is-variable is-5">
+        <div class="column">
+          <div class="pg-panel">
+            <div class="pg-title">Object Mapper &rarr; \(\Phi_\text{Mapper}\)</div>
+            <canvas id="pg-box" width="520" height="320"></canvas>
+            <div class="pg-hint">Drag a red box to move it; drag its corner handle to resize.</div>
+            <div class="pg-buttons">
+              <button class="button is-small is-rounded" data-box-preset="paper">Paper example</button>
+              <button class="button is-small is-rounded" data-box-preset="faithful">Faithful</button>
+              <button class="button is-small is-rounded" data-box-preset="omit">Omit &ldquo;lamp&rdquo;</button>
+            </div>
+            <div class="pg-scores" id="pg-box-scores"></div>
+          </div>
+        </div>
+        <div class="column">
+          <div class="pg-panel">
+            <div class="pg-title">Path Tracer &rarr; \(\Phi_\text{Tracer}\)</div>
+            <canvas id="pg-maze" width="360" height="360"></canvas>
+            <div class="pg-hint">Click a neighbouring cell to extend the route. Click the last cell to undo.</div>
+            <div class="pg-buttons">
+              <button class="button is-small is-rounded" data-maze-preset="faithful">Faithful route</button>
+              <button class="button is-small is-rounded" data-maze-preset="shortcut">Wall-crossing shortcut</button>
+              <button class="button is-small is-rounded" data-maze-preset="partial">Stops one turn early</button>
+              <button class="button is-small is-rounded" data-maze-preset="reset">Reset</button>
+              <label class="checkbox pg-check"><input type="checkbox" id="pg-show-gt"> show engine path</label>
+            </div>
+            <div class="pg-scores" id="pg-maze-scores"></div>
+          </div>
+        </div>
+      </div>
+      <p class="pg-footnote">
+        Try the wall-crossing shortcut: it reaches the goal, so an outcome-only reward gives it the same full credit as the faithful
+        route, even though it follows almost none of the real path. \(\Phi_\text{Tracer}\) separates the two. This toy maze only
+        illustrates the formulas; the paper evaluates them on engine-generated mazes and ScanNet scenes.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== 4. RESULTS ============================== -->
+<section class="section" id="results">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Results</h2>
+    <div class="content has-text-justified">
+      <p>
+        We evaluate on three modalities: video spatial intelligence (<b>VSI-Bench</b>), multi-view relations
+        (<b>SPAR-Bench</b>), and image-based navigation (<b>MAZE</b>). Both scales improve on all three benchmarks. The largest
+        VSI-Bench gains are on metric subtasks where localized drawing helps most: absolute distance goes from 14.59 to 30.14 and
+        object size from 38.64 to 54.56.
+      </p>
+    </div>
+    <div class="bar-chart" id="bar-chart"></div>
+    <div class="table-wrap">
+      <table class="result-table" id="table-main"></table>
+    </div>
+    <p class="table-caption">
+      <b>Main results (%).</b> Best in <b>bold</b>, second-best <u>underlined</u>. Green numbers give each VERSE model's gain
+      over its untuned Qwen2.5-VL base.
+    </p>
+  </div>
+</section>
+
+<!-- ============================== 5. ROLLOUTS ============================== -->
+<section class="section section-alt" id="demo">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">VERSE-7B Rollouts on the Benchmarks</h2>
+    <div class="content has-text-justified">
+      <p>
+        VERSE does not answer in one shot. At every turn it writes a short <code>&lt;think&gt;</code>, emits a JSON call to
+        <b>Object Mapper</b> or <b>Path Tracer</b>, receives the re-rendered image as a new observation, and decides whether to
+        revise or to answer. Below are <b>real VERSE-7B rollouts on held-out benchmark questions</b>. Every frame is re-drawn
+        deterministically from the exact coordinates the model emitted; nothing is re-generated or edited.
+      </p>
+    </div>
+    <p class="demo-note">
+      Pick a benchmark and a question, then step through the turns with
+      <i class="fas fa-backward-step"></i> / <i class="fas fa-forward-step"></i> or by clicking a turn in the transcript.
+      These cases were answered correctly and passed a manual audit of the drawn boxes and paths.
+    </p>
+    <div class="legend">
+      <span><i class="legend-box"></i> Object Mapper box</span>
+      <span><i class="legend-line"></i> Path Tracer segment</span>
+      <span><i class="legend-dot red"></i> segment start</span>
+      <span><i class="legend-dot blue"></i> segment end</span>
+    </div>
+    <div class="case-viewer" id="verse-viewer" data-group="verse"></div>
+  </div>
+</section>
+
+<!-- ============================== 6. OUTCOME-ONLY FAILURES ============================== -->
+<section class="section" id="demo-failures">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Without Process Rewards: Draw-then-Guess</h2>
+    <div class="content has-text-justified">
+      <p>
+        What happens if we train the same model with the <b>same self-evolution loop</b> but set the process-reward weight to
+        \(w = 0\) (outcome-only RL)? The tools are still called, but nothing forces the drawings to be right. In the maze below,
+        the outcome-only checkpoint traces straight through walls, reports every step as &ldquo;correctly visualized&rdquo;, and
+        ends at the wrong destination. Reasoning excerpts for this case are truncated in our logs.
+      </p>
+    </div>
+    <div class="case-viewer" id="fail-viewer" data-group="outcomeOnly"></div>
+  </div>
+</section>
+
+<!-- ============================== 7. ANALYSIS ============================== -->
+<section class="section section-alt" id="analysis">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Analysis: Does the Process Reward Matter?</h2>
+    <div class="content has-text-justified">
+      <p>
+        Benchmark accuracy alone cannot tell faithful drawing from lucky answers. We therefore measure the drawings themselves
+        against engine ground truth, separately from final-answer correctness.
+      </p>
+    </div>
+
+    <div class="columns analysis-cols">
+      <div class="column is-5">
+        <div class="analysis-card">
+          <h3 class="title is-5"><span class="an-num">i</span> Path fidelity predicts accuracy</h3>
+          <img src="static/images/fig4a_fidelity_accuracy.png" alt="Answer accuracy rises with trajectory (path) fidelity across 1,536 navigation rollouts.">
+          <p>
+            Across 1,536 maze-navigation rollouts, path fidelity \(\Phi_\text{Tracer}\) correlates with answer accuracy
+            (\(r = 0.583\), 95% CI [0.496, 0.665]). Accuracy rises from about 5% in the lowest-fidelity bin to above 85% in the
+            highest. The path reward therefore tracks something that matters for task success, not just how the drawing looks.
+          </p>
+        </div>
+      </div>
+      <div class="column is-7">
+        <div class="analysis-card">
+          <h3 class="title is-5"><span class="an-num">ii</span> Engine-verified grounding fidelity rises</h3>
+          <img src="static/images/fig5b_grounding_fidelity.png" alt="Grounding fidelity over 129 scene-task updates of the 200-step VERSE-7B run.">
+          <p>
+            Over the 200-step VERSE-7B run, we score the solver's drawn boxes against engine ground-truth boxes on all 129
+            scene-task updates, independently of whether the answer was right. Individual updates are noisy because they span
+            different scenes and tasks, but both the 9-update moving average and the linear trend rise steadily.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="analysis-card">
+      <h3 class="title is-5"><span class="an-num">iii</span> Grounding behavior of VERSE-7B</h3>
+      <div class="columns is-vcentered">
+        <div class="column is-7">
+          <div class="table-wrap"><table class="result-table compact" id="table-grounding"></table></div>
+          <p class="table-caption">First vs. last 20% of 129 scene-task updates. Hit Rate@0.5 is the fraction of relevant objects whose best drawn box has IoU &ge; 0.5; Coverage is the fraction of relevant objects with any drawn box.</p>
+        </div>
+        <div class="column is-5">
+          <p>
+            Comparing the first and last 20% of updates, mean max-IoU rises from 0.318 to 0.411 (+29.2%) and Hit Rate@0.5 from
+            0.364 to 0.467. Coverage grows less (60.9% to 68.1%). The model is not only drawing boxes for more of the queried
+            objects; the boxes it draws land on the right objects more often.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== 8. SOME NOTES ============================== -->
+<section class="section" id="notes">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Some Notes</h2>
+
+    <details class="faq">
+      <summary>Is the whole VERSE pipeline annotation-free?</summary>
+      <div class="faq-body">
+        No. The two supervised stages (cold-start SFT and reflective SFT) use 34,745 and 7,912 annotated ViLaSR tool-use
+        trajectories to teach tool syntax and reflection. The annotation-free claim covers <b>Stage-3 self-evolution</b> only,
+        which uses no annotated RL questions, answers, or tool-use traces. That stage is also the expensive one: for the 7B model
+        the two SFT stages take 32.0 hours in total, while the first 100 self-evolution steps take 35.0 hours on the same 4 GPUs.
+      </div>
+    </details>
+
+    <details class="faq">
+      <summary>How much compute does training need?</summary>
+      <div class="faq-body">
+        Each stage runs on 4&times; NVIDIA A800 (80 GB). On 7B: cold-start SFT takes 23.6 h, reflective SFT 8.4 h, and
+        self-evolution about 21 minutes per GRPO step (proposer rollout, engine certification, 8 multi-turn solver rollouts per
+        question, rewards, and two GRPO updates).
+      </div>
+    </details>
+
+    <details class="faq">
+      <summary>Does VERSE outperform ViLaSR?</summary>
+      <div class="faq-body">
+        Not in the matched setting. ViLaSR is 0.50 points higher on the three-benchmark mean (higher on VSI-Bench and MAZE; VERSE
+        is higher on SPAR-Bench). The point of the comparison is supervision efficiency: VERSE reaches comparable accuracy while
+        its RL stage uses 1,464 unlabeled contexts instead of 38,610 annotated QA instances. See
+        <a href="#additional">Additional analysis</a> below.
+      </div>
+    </details>
+
+    <details class="faq">
+      <summary>Could the self-evolution contexts overlap with the benchmarks?</summary>
+      <div class="faq-body">
+        We audited this. All 332 ScanNet scans used in self-evolution come from the official training split; VSI-Bench's ScanNet
+        portion uses 88 validation scans (zero overlap at scan and room level). Training mazes come from our own generator with a
+        fixed seed, and evaluation uses ViLaSR's released test split. For SPAR-Bench, which does not release scene ids, an exhaustive
+        perceptual-hash comparison between 7,566 evaluation images and 5,260 training frames found no duplicates.
+      </div>
+    </details>
+
+    <details class="faq">
+      <summary>Why not use a learned process reward model?</summary>
+      <div class="faq-body">
+        Learned PRMs need step-level annotations or costly Monte-Carlo rollouts, and they can drift or hallucinate, especially on
+        vision&ndash;language inputs. VERSE's tool calls are concrete geometric primitives and the engine has full 3D ground truth,
+        so each drawing can be scored exactly with IoU or path alignment. The process signal is deterministic and adds no extra model.
+      </div>
+    </details>
+
+    <details class="faq">
+      <summary>Will the checkpoints and code be released?</summary>
+      <div class="faq-body">
+        The code is available through the link at the top of this page. Checkpoint release details will be announced separately.
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- ============================== 10. ADDITIONAL ANALYSIS (collapsible) ============================== -->
+<section class="section section-alt" id="additional">
+  <div class="container is-max-desktop">
+    <details class="more-section">
+      <summary>
+        <span class="title is-3">Additional Analysis</span>
+        <span class="more-sub">Ablations &middot; Matched comparison with ViLaSR &middot; Tool access alone does not help</span>
+      </summary>
+
+      <div class="more-body">
+        <h3 class="title is-4 subsection-title" id="ablations">Ablations</h3>
+        <div class="content has-text-justified">
+          <p>
+            Removing self-evolution drops VSI-Bench by 5.59 points, removing the engine's question certification by 1.91, and
+            removing process rewards (\(w = 0\)) by 1.63. The outcome-only drop looks small in aggregate, but outcome rewards
+            cannot tell faithful drawings from lucky answers. The <a href="#demo-failures">outcome-only failures</a> and the
+            <a href="#analysis">process-level analysis</a> above test this distinction directly.
+          </p>
+        </div>
+        <div class="table-wrap">
+          <table class="result-table" id="table-ablation"></table>
+        </div>
+        <p class="table-caption"><b>VSI-Bench ablations on Qwen2.5-VL-7B (%).</b> Identical checkpoint schedules.</p>
+
+        <h3 class="title is-4 subsection-title" id="vilasr">Matched comparison with ViLaSR</h3>
+        <div class="content has-text-justified">
+          <p>
+            ViLaSR is the closest baseline: we adopt its tool interface and supervised initialization. We re-ran its Stage-3 RL with
+            the same 7B initialization, 200-step GRPO budget, decoding, and evaluation harness. The two methods are
+            <b>comparable in accuracy</b> (ViLaSR is 0.50 points higher on the mean). The difference is in supervision: ViLaSR's RL
+            stage consumes 38,610 externally annotated QA pairs, while VERSE uses 1,464 unlabeled contexts and creates and
+            certifies its own tasks online.
+          </p>
+        </div>
+        <div class="table-wrap narrow">
+          <table class="result-table" id="table-vilasr"></table>
+        </div>
+
+        <h3 class="title is-4 subsection-title" id="tools-alone">Tool access alone does not help</h3>
+        <div class="content has-text-justified">
+          <p>
+            Are the gains simply from having tools? We put the <i>untuned</i> Qwen2.5-VL-7B into the exact same agentic harness. It
+            skips the tools in 32&ndash;59% of trajectories and over-trusts ungrounded drawings, and its VSI-Bench accuracy
+            halves. After VERSE, the same architecture calls tools in every trajectory (about 9.9 Path Tracer steps per maze, one
+            per action) and beats the direct baseline on every benchmark and every VSI-Bench subtask.
+          </p>
+        </div>
+        <div class="table-wrap"><table class="result-table" id="table-tools"></table></div>
+        <p class="table-caption">Accuracy (%) of Qwen2.5-VL-7B under three protocols.</p>
+        <div class="table-wrap narrow"><table class="result-table compact" id="table-behavior"></table></div>
+        <p class="table-caption has-text-centered">Tool-use behavior in the identical harness (VSI / SPAR / MAZE).</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="static/js/publication.js"></script>
+<script src="static/js/cases.js?v=4"></script>
+<script src="static/js/index.js?v=4"></script>
+<section class="section" id="citation"><div class="container is-max-desktop">
+  <h2 class="title is-3">Citation</h2><pre id="bibtex"></pre>
+</div></section>
+</body>
+</html>

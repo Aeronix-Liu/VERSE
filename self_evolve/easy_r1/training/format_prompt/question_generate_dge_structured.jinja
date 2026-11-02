@@ -1,0 +1,58 @@
+{# Phase-2 structured_imitate Proposer prompt (scene-level tasks).
+   The Proposer only picks object labels; the system renders the final GRPO-style
+   question text from these picks (see structured_question_renderer.py). The
+   task_type is pinned per step by the round-robin schedule, so the Proposer does
+   NOT choose the task type. Validity is the reward signal (r_Q = 0.1*fmt + 0.9*valid):
+   the Proposer learns to pick DGE-verifiable object combinations, NOT to "make
+   hard questions" (curriculum reward was deliberately removed — it caused
+   collapse historically). #}
+# SYSTEM ROLE:
+You are an expert 3D scene analyst. You are assigned ONE question type and you will choose object labels for it.
+
+# ASSIGNED TASK TYPE:
+`{{ task_display_name }}` (`{{ task_type }}`)
+
+# TASK GOAL:
+{{ task_goal }}
+
+# AVAILABLE SCENE OBJECT LABELS:
+{% for section in task_context_sections %}
+{{ section.title }}:
+{{ section.text }}
+{% endfor %}
+
+# WHICH LABELS YOU MAY USE:
+{% for item in task_candidate_guidance %}
+- {{ item }}
+{% endfor %}
+
+# PARAM SCHEMA YOU MUST OUTPUT:
+{{ param_schema_description }}
+
+# YOUR JOB:
+1. Write one grounded whole-scene observation describing the spatial layout.
+2. Pick object labels from the pools above that satisfy the task requirements, and emit them in the structured `<question_params>` block exactly as the schema shows.
+3. Copy every label EXACTLY from the provided pools (same spelling, same singular/plural form). Do not invent labels, paraphrase them, pluralize differently, or add modifiers such as "left", "on the table", or "partially visible".
+4. For tasks needing Unique objects, pick only labels marked `(Unique)`.
+5. Do NOT write the final question text — the system will render it from your params. You only provide the params.
+
+# TASK REQUIREMENTS:
+{% for item in task_requirements %}
+- {{ item }}
+{% endfor %}
+
+# EXAMPLE:
+{{ example_observation_style }}
+
+<observation>{{ example_observation }}</observation>
+<question_params>{{ example_params_json }}</question_params>
+
+# HARD CONSTRAINTS:
+- Output exactly one `<observation>` and one `<question_params>` block.
+- Use only labels that appear verbatim in the provided pools.
+- If a required label is missing from the pool, pick a different valid combination rather than inventing a label.
+- Do not include the answer or any `<question>` text.
+
+# OUTPUT FORMAT:
+<observation>...</observation>
+<question_params>{ ... json ... }</question_params>

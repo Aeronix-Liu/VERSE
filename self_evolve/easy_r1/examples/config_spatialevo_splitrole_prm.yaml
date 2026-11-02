@@ -1,0 +1,133 @@
+data:
+  train_files: ./dataset/spatialevo_train_fullrepro.jsonl
+  val_files: ./dataset/scannet_val_multi_frame_local.jsonl
+  prompt_key: problem
+  answer_key: answer
+  image_key: images
+  video_key: videos
+  image_dir: null
+  video_fps: 2.0
+  max_prompt_length: 5500
+  max_response_length: 768
+  rollout_batch_size: 4
+  mini_rollout_batch_size: 4
+  val_batch_size: 4
+  override_chat_template: null
+  shuffle: true
+  seed: 42
+  min_pixels: 100352
+  max_pixels: 100352
+  filter_overlong_prompts: false
+algorithm:
+  adv_estimator: grpo
+  two_round_training: true
+  disable_kl: false
+  use_kl_loss: true
+  kl_penalty: low_var_kl
+  kl_coef: 0.01
+  online_filtering: false
+  filter_key: overall
+  filter_low: 0.01
+  filter_high: 0.99
+worker:
+  actor:
+    global_batch_size: 4
+    micro_batch_size_per_device_for_update: 1
+    micro_batch_size_per_device_for_experience: 1
+    max_grad_norm: 1.0
+    padding_free: true
+    dynamic_batching: true
+    ulysses_size: 1
+    use_torch_compile: false
+    model:
+      model_path: /data/pengtianshuo/self_evolve/models/Qwen3-VL-8B-Instruct
+      enable_gradient_checkpointing: true
+      trust_remote_code: true
+      freeze_vision_tower: true
+    optim:
+      lr: 1.0e-06
+      weight_decay: 0.01
+      strategy: adamw
+      lr_warmup_ratio: 0.0
+    fsdp:
+      enable_full_shard: true
+      enable_cpu_offload: false
+      enable_rank0_init: true
+      torch_dtype: bf16
+    offload:
+      offload_params: true
+      offload_optimizer: false
+  rollout:
+    n: 4
+    temperature: 1.0
+    max_model_len: 6400
+    max_num_batched_tokens: 6400
+    top_p: 1.0
+    limit_images: 8
+    gpu_memory_utilization: 0.45
+    enforce_eager: true
+    enable_chunked_prefill: true
+    tensor_parallel_size: 4
+    disable_tqdm: true
+    val_override_config:
+      temperature: 0.6
+      top_p: 0.95
+      n: 1
+  ref:
+    fsdp:
+      enable_full_shard: true
+      enable_cpu_offload: false
+      enable_rank0_init: true
+      torch_dtype: bf16
+    offload:
+      offload_params: true
+  reward:
+    reward_function: ./training/reward_function/unified_reward.py:compute_score
+    reward_function_kwargs:
+      question_quality_kwargs:
+        model: gpt-4o-mini
+        api_key: EMPTY
+        service_url: https://api.openai.com/v1
+        timeout: 120
+      majority_correctness_kwargs:
+        model: gpt-4o-mini
+        api_key: EMPTY
+        service_url: https://api.openai.com/v1
+        timeout: 120
+        # --- Split-role PRM: scene-grounded step-level reasoning judge ---
+        # Valid-answer reasoning is graded by the LOCAL frozen-Proposer vLLM
+        # server (NOT the Ark API). Invalid-question + round-1 quality judging
+        # stay on Ark (model/api_key/service_url above).
+        prm_enable: 1
+        prm_judge_url: http://127.0.0.1:8200/v1
+        prm_judge_model: qwen3-vl-8b-local
+        prm_judge_api_key: EMPTY
+        prm_judge_timeout: 60
+        prm_answer_weight: 0.7
+        prm_reasoning_weight: 0.3
+        prm_max_workers: 8
+        prm_max_images: 8
+    skip_special_tokens: true
+    num_cpus: 2
+trainer:
+  total_epochs: 2
+  max_steps: 1092
+  project_name: VERSE
+  experiment_name: VERSE_SplitRole_PRM
+  logger:
+  - file
+  - wandb
+  nnodes: 1
+  n_gpus_per_node: 4
+  max_try_make_batch: 30
+  world_simulator_max_workers: 4
+  val_freq: -1
+  val_before_train: false
+  val_only: false
+  val_generations_to_log: 3
+  save_freq: 273
+  save_limit: 5
+  save_model_only: true
+  save_checkpoint_path: /data/pengtianshuo/self_evolve/Xinran/checkpoints/VERSE_SplitRole_PRM
+  load_checkpoint_path: null
+  find_last_checkpoint: true

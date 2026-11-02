@@ -1,0 +1,51 @@
+# VERSE Stage 2 — Reflective Rejection Sampling (RRS) SFT. Continues from the
+# cold-start model on the filtered reflective (self-correction) trajectories,
+# teaching think->draw->observe->revise tool use. LLaMA-Factory full SFT on 4xA800.
+#
+# Paths below are placeholders (__VAR__) filled by scripts/train_reflective_sft.sh
+# from configs/paths.env.
+### model
+model_name_or_path: __VERSE_CKPT__/verse_cold_start   # Stage-1 output
+image_max_pixels: 1003520
+video_max_pixels: 1003520
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full
+freeze_vision_tower: true
+freeze_multi_modal_projector: true
+freeze_language_model: false
+deepspeed: __VERSE_ROOT__/sft/ds_z3_config.json
+
+### dataset
+dataset: vqa_reflective_clean,maze_reflective_clean,GPT4Scene_reflective_clean,SR_91k_reflective_clean
+dataset_dir: __VERSE_DATA__
+template: qwen2_vl
+cutoff_len: 18432
+overwrite_cache: false
+tokenized_path: __VERSE_DATA__/.tokenized_reflective_clean
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+
+### output
+output_dir: __VERSE_CKPT__/verse_rrs
+logging_steps: 10
+save_steps: 247                  # ~1 ckpt/epoch (247 steps/epoch at eff-batch 32)
+save_total_limit: 3
+plot_loss: true
+overwrite_output_dir: false
+save_only_model: false
+report_to: none
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-5
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+resume_from_checkpoint: null

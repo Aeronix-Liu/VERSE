@@ -1,0 +1,51 @@
+# VERSE Stage 1 — Cold-start SFT (teaches the base VLM the agentic drawing
+# tool grammar: Object Mapper / Path Tracer). LLaMA-Factory full SFT on 4xA800.
+# Effective batch = 4 GPUs * per_device 1 * grad_accum 8 = 32.
+#
+# Paths below are placeholders of the form __VAR__ that scripts/train_cold_start_sft.sh
+# fills in from configs/paths.env (so nothing is hard-coded to one machine).
+### model
+model_name_or_path: __VERSE_BASE_MODEL__      # Qwen/Qwen2.5-VL-7B-Instruct
+image_max_pixels: 1003520                          # 1280*28*28
+video_max_pixels: 1003520
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full
+freeze_vision_tower: true
+freeze_multi_modal_projector: true
+freeze_language_model: false
+deepspeed: __VERSE_ROOT__/sft/ds_z3_config.json
+
+### dataset
+dataset: vqa_cold_start_clean,maze_cold_start_clean,GPT4Scene_cold_start_clean,SR_91k_cold_start_clean
+dataset_dir: __VERSE_DATA__                    # holds dataset_info.json + {cold_start,rrs}/*.json + images
+template: qwen2_vl
+cutoff_len: 18432
+overwrite_cache: false
+tokenized_path: __VERSE_DATA__/.tokenized_cold_start_clean
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+
+### output
+output_dir: __VERSE_CKPT__/verse_cold_start
+logging_steps: 10
+save_steps: 543                  # ~half epoch (1 epoch ~= 1086 steps)
+save_total_limit: 10
+plot_loss: true
+overwrite_output_dir: false
+save_only_model: false
+report_to: none
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 8
+learning_rate: 1.0e-5
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+resume_from_checkpoint: null

@@ -1,0 +1,22 @@
+# VERSE self-evolve GRPO env (verl / EasyR1 based). Python 3.10-3.12.
+# Install into a dedicated conda env; see scripts/setup_env.sh.
+accelerate
+codetiming
+datasets
+flash-attn>=2.4.3
+liger-kernel
+mathruler
+numpy
+omegaconf
+pandas
+peft
+pillow
+pyarrow>=15.0.0
+pylatexenc
+qwen-vl-utils
+ray[default]
+tensordict
+torchdata
+transformers>=4.54.0,<=4.57.0
+vllm>=0.8.0
+wandb

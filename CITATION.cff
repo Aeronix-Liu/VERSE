@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "Please cite the VERSE paper when using this work."
+type: software
+title: "VERSE: Verifiable Spatial Self-Evolution with Geometric Process Rewards"
+authors:
+  - family-names: Liu
+    given-names: Xinran
+  - family-names: Jiang
+    given-names: Yilei
+  - family-names: Peng
+    given-names: Tianshuo
+  - family-names: Fan
+    given-names: Kaixuan
+  - family-names: Hu
+    given-names: Jinyuan
+  - family-names: Yue
+    given-names: Xiangyu
+repository-code: https://github.com/Aeronix-Liu/VERSE
+url: https://aeronix-liu.github.io/VERSE/
+license: MIT

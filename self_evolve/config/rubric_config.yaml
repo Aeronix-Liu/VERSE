@@ -1,0 +1,24 @@
+tools:
+  vlm_tool:
+    model: gpt-4o-mini
+    vision_model: gpt-4o-mini
+    api_key: EMPTY
+    base_url: https://api.openai.com/v1
+    max_retries: 20
+    temperature: 0.1
+    extraction_temperature: 0.0
+    max_tokens: 12288
+    timeout: 120
+    extraction_use_vision: false
+  invalid_recovery_tool:
+    model: null
+    vision_model: null
+    api_key: null
+    base_url: null
+    timeout: 120
+    max_retries: 20
+    temperature: 0.0
+    max_tokens: 512
+    max_scene_images: 0
+    attach_scene_bev: true
+    attach_bbox_overlay: true
