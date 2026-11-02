@@ -34,6 +34,11 @@ drawing* (boxing the right object / tracing the right path), not just lucky answ
 
 ## Method — three stages
 
+![VERSE method: cold-start SFT, reflective SFT, and agentic self-evolution with engine-verified geometric process rewards](docs/static/images/fig3_pipeline.png)
+
+Cold-start SFT learns tool syntax; reflective SFT learns to revise drawings;
+self-evolution verifies both answers and intermediate visual actions.
+
 | Stage | Method | Teaches | Output checkpoint |
 |---|---|---|---|
 | 1. Cold-start SFT | SFT on ViLaSR synthetic tool-use trajectories (~34.7k) | Object Mapper / Path Tracer *syntax* | `verse_cold_start` |
@@ -41,6 +46,19 @@ drawing* (boxing the right object / tracing the right path), not just lucky answ
 | 3. Self-Evolve GRPO | label-free RL: propose → engine-verify → solve → update | spatial reasoning via self-generated, engine-verified problems (+ optional process reward) | `verse_self_evolve` |
 
 Details: [`docs/project_explainer.md`](docs/project_explainer.md) (deep dive) · ablations: [`docs/ABLATIONS.md`](docs/ABLATIONS.md).
+
+## Demo
+
+A recorded MAZE rollout: **left → down → down → left**. VERSE traces the route
+with four tool calls and answers **B**, matching the ground truth.
+
+<p align="center">
+  <a href="https://aeronix-liu.github.io/VERSE/#demo">
+    <img src="docs/static/images/readme_maze_demo.gif" width="440" alt="Recorded VERSE maze rollout: four Path Tracer actions lead to answer B, matching ground truth.">
+  </a>
+</p>
+
+[Explore more rollouts and the interactive verifier on the project page →](https://aeronix-liu.github.io/VERSE/#demo)
 
 ## Results
 
