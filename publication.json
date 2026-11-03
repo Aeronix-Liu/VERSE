@@ -3,5 +3,6 @@
   "arxiv_id": null,
   "github": "https://github.com/Aeronix-Liu/VERSE",
   "project": "https://aeronix-liu.github.io/VERSE/",
+  "model": "https://huggingface.co/Aeronix-zzz/VERSE-7B",
   "year": 2026
 }

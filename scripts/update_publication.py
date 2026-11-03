@@ -22,10 +22,11 @@ links = [f'[Paper]({cfg["project"]}static/pdf/VERSE.pdf)',
          f'[Project page]({cfg["project"]})', f'[Code]({cfg["github"]})']
 if aid:
     links += [f'[arXiv]({arxiv})', f'[Hugging Face Paper]({hf})']
+if cfg.get('model'):
+    links += [f'[VERSE-7B Model]({cfg["model"]})']
 block = ' · '.join(links)
 if not aid:
     block += '\n\narXiv and Hugging Face Paper links will be added after the arXiv ID is assigned.'
-block += '\n\nModel checkpoint links are deferred for this release.'
 readme = root / 'README.md'
 text = readme.read_text(encoding='utf-8')
 text = re.sub(r'<!-- publication:start -->.*?<!-- publication:end -->',
@@ -54,6 +55,7 @@ js = 'const publication = ' + json.dumps(data, ensure_ascii=False) + ';\n' + '''
     ['Code', publication.github, 'fab fa-github']];
   if (publication.arxiv) links.push(['arXiv', publication.arxiv, 'ai ai-arxiv']);
   if (publication.hf_paper) links.push(['Hugging Face Paper', publication.hf_paper, 'fas fa-file-lines']);
+  if (publication.model) links.push(['VERSE-7B Model', publication.model, 'fas fa-cube']);
   links.push(['Rollouts', '#demo', 'fas fa-images']);
   links.forEach(function (item) {
     const span = document.createElement('span'); span.className = 'link-block';

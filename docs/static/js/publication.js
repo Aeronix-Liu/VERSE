@@ -1,4 +1,4 @@
-const publication = {"title": "VERSE: Verifiable Spatial Self-Evolution with Geometric Process Rewards", "arxiv_id": null, "github": "https://github.com/Aeronix-Liu/VERSE", "project": "https://aeronix-liu.github.io/VERSE/", "year": 2026, "arxiv": null, "hf_paper": null, "bibtex": "@misc{liu2026verse,\n  title={VERSE: Verifiable Spatial Self-Evolution with Geometric Process Rewards},\n  author={Liu, Xinran and Jiang, Yilei and Peng, Tianshuo and Fan, Kaixuan and Hu, Jinyuan and Yue, Xiangyu},\n  year={2026},\n  url={https://aeronix-liu.github.io/VERSE/}\n}"};
+const publication = {"title": "VERSE: Verifiable Spatial Self-Evolution with Geometric Process Rewards", "arxiv_id": null, "github": "https://github.com/Aeronix-Liu/VERSE", "project": "https://aeronix-liu.github.io/VERSE/", "model": "https://huggingface.co/Aeronix-zzz/VERSE-7B", "year": 2026, "arxiv": null, "hf_paper": null, "bibtex": "@misc{liu2026verse,\n  title={VERSE: Verifiable Spatial Self-Evolution with Geometric Process Rewards},\n  author={Liu, Xinran and Jiang, Yilei and Peng, Tianshuo and Fan, Kaixuan and Hu, Jinyuan and Yue, Xiangyu},\n  year={2026},\n  url={https://aeronix-liu.github.io/VERSE/}\n}"};
 
 (function () {
   const root = document.getElementById('publication-links');
@@ -6,6 +6,7 @@ const publication = {"title": "VERSE: Verifiable Spatial Self-Evolution with Geo
     ['Code', publication.github, 'fab fa-github']];
   if (publication.arxiv) links.push(['arXiv', publication.arxiv, 'ai ai-arxiv']);
   if (publication.hf_paper) links.push(['Hugging Face Paper', publication.hf_paper, 'fas fa-file-lines']);
+  if (publication.model) links.push(['VERSE-7B Model', publication.model, 'fas fa-cube']);
   links.push(['Rollouts', '#demo', 'fas fa-images']);
   links.forEach(function (item) {
     const span = document.createElement('span'); span.className = 'link-block';

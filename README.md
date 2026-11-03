@@ -5,11 +5,9 @@ Xinran Liu · Yilei Jiang · Tianshuo Peng · Kaixuan Fan · Jinyuan Hu · Xiang
 MMLab, The Chinese University of Hong Kong
 
 <!-- publication:start -->
-[Paper](https://aeronix-liu.github.io/VERSE/static/pdf/VERSE.pdf) · [Project page](https://aeronix-liu.github.io/VERSE/) · [Code](https://github.com/Aeronix-Liu/VERSE)
+[Paper](https://aeronix-liu.github.io/VERSE/static/pdf/VERSE.pdf) · [Project page](https://aeronix-liu.github.io/VERSE/) · [Code](https://github.com/Aeronix-Liu/VERSE) · [VERSE-7B Model](https://huggingface.co/Aeronix-zzz/VERSE-7B)
 
 arXiv and Hugging Face Paper links will be added after the arXiv ID is assigned.
-
-Model checkpoint links are deferred for this release.
 <!-- publication:end -->
 
 **VERSE** teaches a vision-language model (Qwen2.5-VL-7B) to reason about 3D space by
@@ -73,7 +71,7 @@ for the complete evaluation protocol, per-task scores, and ablations.
 ## Release availability
 
 This release includes the paper, project page, and training/evaluation code.
-Checkpoint download links are deferred. The training scripts accept local model paths.
+The [VERSE-7B checkpoint](https://huggingface.co/Aeronix-zzz/VERSE-7B) is available on Hugging Face. The training scripts accept local model paths.
 Dataset repository names in configuration are planned endpoints; supply local data
 paths until those datasets are available. ScanNet assets remain subject to the
 original dataset terms.
@@ -138,7 +136,7 @@ bash scripts/download_data.sh
 bash scripts/download_vilasr_images.sh
 bash scripts/download_context.sh
 
-# Train Stages 1 and 2 locally; checkpoint download links are deferred.
+# Train Stages 1 and 2 locally to reproduce the training pipeline.
 
 # 4) train (resume from released ckpts, or run all three stages)
 bash scripts/train_cold_start_sft.sh          # Stage 1
@@ -156,7 +154,7 @@ bash scripts/eval_benchmarks.sh $VERSE_CKPT/verse_rrs vsi_bench spar_bench maze
 ## Data and checkpoints
 
 Dataset preparation and local model paths are documented in the scripts.
-Checkpoint release details will be announced separately.
+Download the released [VERSE-7B model](https://huggingface.co/Aeronix-zzz/VERSE-7B) from Hugging Face.
 
 ## Notes
 

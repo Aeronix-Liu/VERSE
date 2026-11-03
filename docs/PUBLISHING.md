@@ -27,10 +27,11 @@ rendered by arXiv before completing submission. No arXiv ID is invented here.
 
 ## Checkpoints
 
-Checkpoint links are intentionally deferred for this initial publication.
+The released VERSE-7B checkpoint is linked from the README and project page:
+https://huggingface.co/Aeronix-zzz/VERSE-7B
 No existing model repository visibility is changed by these publishing scripts.
 
-When checkpoints are announced later, adding the actual arXiv URL to each model
+After the arXiv ID is assigned, adding the actual arXiv URL to each model
 card allows Hugging Face to associate it with the paper. Preserve each model's
 existing card metadata and license.
 
